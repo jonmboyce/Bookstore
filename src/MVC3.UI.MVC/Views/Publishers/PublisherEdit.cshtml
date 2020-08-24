@@ -1,0 +1,109 @@
+﻿@model MVC3.DATA.EF.Publisher
+
+<!--This partialView will be used in a popup modal on Index for Publisher Edit-->
+
+
+@using (Html.BeginForm("", "", FormMethod.Post, new { id = "PublisherEditForm" }))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        @Html.HiddenFor(model => model.PublisherID)
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.PublisherName, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.PublisherName, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.PublisherName, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.City, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.City, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.City, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.State, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.State, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.State, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.IsActive, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                <div class="checkbox">
+                    @Html.EditorFor(model => model.IsActive)
+                    @Html.ValidationMessageFor(model => model.IsActive, "", new { @class = "text-danger" })
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" id="saveUpdate" value="Update Publisher" class="btn btn-default" />
+            </div>
+        </div>
+    </div>
+}
+
+<div>
+    @Html.ActionLink("Back to List", "Index")
+</div>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}
+
+<script>
+    //Submit the form
+        $('#PublisherEditForm').submit(function (e) {
+            //Serialize (package up the form data for transport as an object)
+            //Create an array of objects with a name and a value
+            var formData = $(this).serializeArray();
+            //Interrupt the normal subit event
+            e.preventDefault();
+            //Message the user while it is processing
+            $('#MessageContent').html("<div class='alert alert-info'>Please wait...</div>");
+            //Call to AJAX****
+            $.ajax({
+                //Call the POST PublisherCreate Action
+                url: "@Url.Action("AjaxEdit", "Publishers")",
+                type: "POST",
+                //serialized form data
+                data: formData,
+                //send as Json
+                dataType: "json",
+                //make sure it succeeded
+                success: function (data) {
+                    //if it works, show the success message in the div located above the renderbody() in the layout
+                    $('#MessageContent').html("<div class='alert alert-success'>Your record was successfully updated!</div>");
+                    //Clear the form
+                    $('#PublisherEditForm')[0].reset();
+                    //Add the (temporary) row to the table (remember the browser 
+                    //is being manually updated so you will see a message to refresh the view
+                    //You could code these in, we're leaving them out so you can see asynchronous activity)
+                    //when the view is refreshed the new record will load into the table with links in the last column
+                    $(function() {
+                        var row = '<tr><td>' + data.PublisherName +
+                            '</td><td>' + data.City +
+                            '</td><td>' + data.State +
+                            '</td><td></td><td>Refresh to view options </td></tr>';//Buttons are not available for this new item 
+                        //Replace the row to the table
+                        $('#Publisher-' + data.PublisherID).replaceWith(row);
+                    });
+                    $("#PublisherEdit").dialog('close');
+                },
+                //If there is an error, then show the alert message in the div located above the renderbody
+                error: function (e) {
+                    $('#MessageContent').html("<div class='alert alert-warning'> There was an error. Please try again or contact the site admin.</div>");
+                }
+            });
+        });
+</script>

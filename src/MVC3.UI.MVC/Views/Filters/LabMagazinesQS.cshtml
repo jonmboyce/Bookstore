@@ -1,0 +1,71 @@
+﻿@model IEnumerable<MVC3.DATA.EF.Magazine>
+
+@{
+    ViewBag.Title = "LabMagazinesQS";
+}
+
+<h2>LabMagazinesQS</h2>
+
+<div class="row panel panel-primary">
+    <br />
+    <form action="LabMagazinesQS" method="get" class="form-horizontal pull-left">
+        <div class="form-group">
+            <div class="col-xs-offset-1 col-xs-11 col-sm-2">
+                <label for="searchFilter">Search Category</label>
+            </div>
+            <div class="col-xs-offset-1 col-xs-11 col-sm-5">
+                <input type="text" name="searchFilter" />
+            </div>
+            <div class="col-xs-offset-1 col-xs-11 col-sm-2">
+                <input type="submit" value="Go!" class="btn btn-primary" />
+            </div>
+            </div>
+</form>
+</div>
+<table class="table">
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.MagazineTitle)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.IssuesPerYear)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.PricePerYear)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Category)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Circulation)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.PublishRate)
+        </th>
+        <th></th>
+    </tr>
+
+@foreach (var item in Model) {
+    <tr>
+        <td>
+            @Html.DisplayFor(modelItem => item.MagazineTitle)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.IssuesPerYear)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.PricePerYear)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Category)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Circulation)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.PublishRate)
+        </td>
+    </tr>
+}
+
+</table>

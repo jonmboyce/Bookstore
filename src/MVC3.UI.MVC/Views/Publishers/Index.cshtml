@@ -1,0 +1,221 @@
+﻿@model IEnumerable<MVC3.DATA.EF.Publisher>
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Index</h2>
+
+
+<!--commented out original create button action link and replaced with a new toggle button -->
+
+@*<p>
+    @Html.ActionLink("Create New", "Create")
+</p>*@
+
+<h2>
+    <button id="togglePublisherCreate" class="btn btn-primary">
+        Create Publisher
+    </button>
+</h2>
+
+<!--AJAX create form-->
+
+<div id="PublisherCreate">
+    @* render the partial view here *@
+    @Html.Partial("PublisherCreate", new MVC3.DATA.EF.Publisher())
+</div>
+
+<table class="table" id="PublishersTable">
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.PublisherName)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.City)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.State)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.IsActive)
+        </th>
+        <th></th>
+    </tr>
+
+@foreach (var item in Model) {
+    <tr id="Publisher-@item.PublisherID">
+        <td>
+            @Html.DisplayFor(modelItem => item.PublisherName)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.City)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.State)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.IsActive)
+        </td>
+        <td>
+            <a href="" class="EditLink" id="@item.PublisherID">Edit</a>
+
+            @*@Html.ActionLink("Edit", "Edit", new { id=item.PublisherID }) |*@
+
+
+            <!--commented out the details link and make Hyperlink where the click is intercepted(see js below) and return the modal popup
+                from the jquery ui instead of a new view-->
+            <a href="" class="DetailsLink" id="@item.PublisherID">Details</a> |
+            @*@Html.ActionLink("Details", "Details", new { id=item.PublisherID }) |*@
+            <!--Replacing default delete button with Ajax delete button-->
+            @*@Html.ActionLink("Delete", "Delete", new { id=item.PublisherID })*@
+
+            @if (item.Books.Count == 0)
+            {
+                //Signature used: (string text, string action, string controller, object routeValues, object ajax Options
+                @Ajax.ActionLink("Delete", "AjaxDelete", "Publishers", new { id = item.PublisherID },
+                    new AjaxOptions
+                    {
+                        HttpMethod = "Post",
+                        Confirm = "Are you sure you want to remove the " + item.PublisherName + " from Publishers?",
+                        OnSuccess = "deleteConfirmed"
+                    });
+            } else
+            {
+                <span class="myWarning">In Use</span>
+            }
+        </td>
+    </tr>
+}
+
+</table>
+
+<!--Place holder for the Modal Dialog for details-->
+
+<div id="PublisherDetails"></div>
+<!--placeholders for our scripts-->
+<div id="PublisherEdit"></div>
+
+
+@section scripts {
+    <script type="text/javascript">
+        //AJAX DELETE CONFIRMATION
+        //
+        function deleteConfirmed(response) {
+            //Remove the row from the table - that will match up with teh response from the action 
+            var rowId = '#Publisher-' + response.id;
+            $('#PublishersTable').find(rowId).remove();
+
+            //Display a status message. (WHy we added the div to the _layout)
+            $('#MessageContent').html("<div class='alert alert-success'> response." + response.message + "</div>");
+        }
+
+        //AJAX Details Dialog Box
+        $('a.DetailsLink').click(function (e) {
+            e.preventDefault(); //this prevents the browser window from reloading
+            //(declaration, Assignment).dialog
+            $('#PublisherDetails').data('pId', $(this).attr('id')).dialog({
+                //Dialog properties can be found at the jqueryui.com dialog-modal
+                modal: true,
+                open: function () {
+                    //grab the id of row data and assign it to a new variable
+                    var data = $(this).data('pId');
+                    //Load the new PublisherDetails partialView using the id
+                    $(this).load("/Publishers/PublisherDetails/" + data);
+                },
+                width: 400,
+                height: 200,
+                title: "Publisher Details",
+                resizable: false
+            });
+        });
+
+
+        //AJAX Show Create form - this toggles the end user capability to see the form
+        //When the create publisher button is clicked toggle the create form visibility
+        //back on (it should start out hidden)
+        //around line 24 or so is publisherCreate button we're tying into
+        $('#PublisherCreate').hide();
+        //button above
+        $('#togglePublisherCreate').click(function () {
+            $('#PublisherCreate').toggle();
+            //toggle the text and color of the button
+            if ($('#PublisherCreate').is(':visible')) {
+                $('#togglePublisherCreate').html('Cancel');
+                $('#togglePublisherCreate').attr('class', 'btn btn-danger');
+            } else {
+                $('#togglePublisherCreate').html('Create Publisher');
+                $('#togglePublisherCreate').attr('class', 'btn btn-primary');
+            }
+
+        })
+
+        //Submit the form
+        $('#PublisherCreateForm').submit(function (e) {
+            //Serialize (package up the form data for transport as an object)
+            //Create an array of objects with a name and a value
+            var formData = $(this).serializeArray();
+            //Interrupt the normal submit event
+            e.preventDefault();
+            //Message the user while it is processing
+            $('#MessageContent').html("<div class='alert alert-info'>Please wait...</div>");
+            //Call to AJAX****
+            $.ajax({
+                //Call the POST PublisherCreate Action
+                url: "@Url.Action("PublisherCreate", "Publishers")",
+                type: "POST",
+                //serialized form data
+                data: formData,
+                //send as Json
+                dataType: "json",
+                //make sure it succeeded
+                success: function (data) {
+                    //if it works, show the success message in the div located above the renderbody() in the layout
+                    $('#MessageContent').html("<div class='alert alert-success'>Your record was successfully inserted!</div>");
+                    //Clear the form
+                    $('#PublisherCreateForm')[0].reset();
+                    //Add the (temporary) row to the table (remember the browser 
+                    //is being manually updated so you will see a message to refresh the view
+                    //You could code these in, we're leaving them out so you can see asynchronous activity)
+                    //when the view is refreshed the new record will load into the table with links in the last column
+                    $(function() {
+                        var row = '<tr><td>' + data.PublisherName +
+                            '</td><td>' + data.City +
+                            '</td><td>' + data.State +
+                            '</td><td></td><td>Refresh to view options </td></tr>';//Buttons are not available for this new item 
+                        //Add the row to the table
+                        $('#PublishersTable').append(row);
+
+                        //close the form and show the create button
+                        $('#PublisherCreate').toggle();
+                        $('#togglePublisherCreate').html('Create Publisher');
+                        $('#togglePublisherCreate').attr('class', 'btn btn-primary');
+                    });
+                },
+                //If there is an error, then show the alert message in the div located above the renderbody
+                error: function (e) {
+                    $('#MessageContent').html("<div class='alert alert-warning'> There was an error. Please try again or contact the site admin.</div>");
+                }
+            });
+        });
+
+        //Show Edit Dialog Modal
+        $('a.EditLink').click(function (e) {
+            e.preventDefault();
+            $("#PublisherEdit").data('pId', $(this).attr('id')).dialog({
+                modal: true,
+                open: function () {
+                    var data = $(this).data('pId');
+                    $(this).load("/Publishers/PublisherEdit/" + data);
+                },
+                width: 600,
+                height: 450,
+                title: "Edit Publisher",
+                resizable: false
+            });
+        });
+
+
+    </script>
+    
+    }

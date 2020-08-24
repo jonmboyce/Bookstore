@@ -1,0 +1,85 @@
+﻿@*@model IEnumerable<MVC3.UI.MVC.Models.ShoppingCartViewModel>*@
+
+<!--changing the data type accepted by the view to the Dictionary <int, SCVM>-->
+@model Dictionary<int, MVC3.UI.MVC.Models.ShoppingCartViewModel>
+
+@{
+    ViewBag.Title = "Shopping Cart";
+    <!--the table should display - Book Cover, Title, Price, Quantity, Line item total-->
+    <!--the bottom of the cart page should display the cart total and how many books are included-->
+    <!--define the cart total varible and the totalCount variable-->
+    <!--nullable variables are declared using the ? at the end of the datatype-->
+    decimal? cartTotal = 0;
+    int totalCountOfItems = 0;
+}
+
+<h2>@ViewBag.Title</h2>
+
+@if (Model.Count == 0)
+{
+    <p class="alert alert-warning">@ViewBag.Message</p>
+}
+else
+{
+
+    <table class="table">
+        <tr>
+            <th>Book Cover</th>
+            <th>Title</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Total</th>
+        </tr>
+
+
+
+
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    <!--Model represents our dictionary, to get specific values in the product poriton of the collection
+                            we need to access the Value property, the product, then property-->
+                    <img src="~/Content/imgstore/books/t_@item.Value.Product.BookImage" alt="Book Cover" title="@item.Value.Product.BookTitle" />
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Value.Product.BookTitle)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Value.Product.Price)
+                </td>
+                <td>
+                    <!--this will be for quantity-->
+                    <!--allow for a change of quantity in the cart index-->
+                    @using (Html.BeginForm("UpdateCart", "ShoppingCart", FormMethod.Post))
+                    {
+                        //pass the id of the book in this line item
+                        @Html.Hidden("bookId", item.Value.Product.BookID)
+                        @Html.TextBox("qty", item.Value.Qty, new { @class = "form-control", style = "max-width:50px; display:inline;"})
+
+                       <input type="submit" value="Update Quantity" class="center-btn btn-primary"/>
+                    }
+                    @{ totalCountOfItems += item.Value.Qty;}
+                </td>
+                <td>
+                    <!--Calculate the line total and display in currency format-->
+                    @{ 
+                        decimal? lineTotal = item.Value.Product.Price * item.Value.Qty;
+                        <!--Update the cart total and display in the lineTotal-->
+                        cartTotal += lineTotal;
+                    }
+                    @string.Format($"{lineTotal:c}")
+                </td>
+                <td>
+                    <!--RemoveFromCart Functionality-->
+                    @Html.ActionLink("Remove From Cart", "RemoveFromCart", new { id = item.Value.Product.BookID })
+                </td>
+            </tr>
+        }
+
+    </table>
+    <p>
+        You have @totalCountOfItems book(s) in your cart.
+        Your total before taxes and shipping is @string.Format($"{cartTotal:c}")
+    </p>
+}
